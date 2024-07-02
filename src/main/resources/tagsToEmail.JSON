@@ -1,0 +1,7 @@
+{
+    "work": ["john.doe@example.com", "jane.smith@example.com"],
+    "friends": ["friend1@email.com", "friend2@email.com", "friend3@email.com"],
+    "family": ["parent1@example.com", "sibling1@example.com", "cousin@example.com"],
+    "school": ["teacher@example.com", "classmate1@example.com", "classmate2@example.com"]
+  }
+  
