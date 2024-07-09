@@ -4,13 +4,13 @@ import java.util.List;
 import java.util.Map;
 
 public class TagEmailMap {
-    private Map<String, List<String>> tagToEmails;
+    private Map<String, List<String>> tagsToEmails;
 
     public Map<String, List<String>> getTagsToEmails() {
-        return tagToEmails;
+        return tagsToEmails;
     }
 
-    public void setTags(Map<String, List<String>> tagToEmails) {
-        this.tagToEmails = tagToEmails;
+    public void setTags(Map<String, List<String>> tagsToEmails) {
+        this.tagsToEmails = tagsToEmails;
     }
 }

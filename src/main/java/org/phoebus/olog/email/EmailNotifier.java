@@ -29,7 +29,6 @@ public class EmailNotifier implements LogEntryNotifier {
 
         String logTitle = log.getTitle();
         String sender = EmailPreferences.username + "@" + EmailPreferences.mailhost;
-        System.out.println(logTitle);
         try {
             Map<String,List<String>> tagEmailMap = TagEmailMapPreferences.tagEmailMap();
             for (Tag tag : tags) {

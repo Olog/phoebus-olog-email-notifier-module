@@ -11,7 +11,6 @@ import org.phoebus.framework.preferences.Preference;
 /** Preference settings for tag to email list
  *  @author Conor Schofield
  */
-@SuppressWarnings("nls")
 public class TagEmailMapPreferences
 {
     @Preference public static File tagsToEmailsFile;
