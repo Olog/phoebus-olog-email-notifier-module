@@ -2,10 +2,17 @@ package org.phoebus.olog.email;
 
 import org.phoebus.olog.entity.Log;
 import org.phoebus.olog.notification.LogEntryNotifier;
+import org.simplejavamail.MailException;
+import org.simplejavamail.api.email.Email;
+import org.simplejavamail.api.mailer.Mailer;
+import org.simplejavamail.email.EmailBuilder;
+import org.simplejavamail.springsupport.SimpleJavaMailSpringSupport;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
+import org.springframework.stereotype.Component;
 
-import org.phoebus.email.EmailService;
-import org.phoebus.email.EmailPreferences;
-import org.phoebus.olog.email.TagEmailMapPreferences;
+import com.google.auto.service.AutoService;
+
 import org.phoebus.olog.entity.Tag;
 import org.phoebus.olog.entity.State;
 
@@ -16,11 +23,18 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.mail.MessagingException;
- 
+@AutoService(LogEntryNotifier.class)
+@Component
+@Import(SimpleJavaMailSpringSupport.class)
 public class EmailNotifier implements LogEntryNotifier {
  
     private Logger logger = Logger.getLogger(EmailNotifier.class.getName());
+
+    @Autowired
+    private TagEmailMapPreferences tagEmailMapPreferences;
+    
+    @Autowired
+    private Mailer mailer;
 
     @Override
     public void notify(Log log) {
@@ -28,24 +42,34 @@ public class EmailNotifier implements LogEntryNotifier {
         List<String> emailList = new ArrayList<>();
 
         String logTitle = log.getTitle();
-        String sender = EmailPreferences.username + "@" + EmailPreferences.mailhost;
+        logger.log(Level.INFO,"Logbook Email Started");
         try {
-            Map<String,List<String>> tagEmailMap = TagEmailMapPreferences.tagEmailMap();
+            Map<String,List<String>> tagEmailMap = tagEmailMapPreferences.tagEmailMap();
+            logger.log(Level.INFO, tagEmailMap.toString());
             for (Tag tag : tags) {
                 if (tag.getState() == State.Active) {
                     String tagName = tag.getName();
                     emailList.addAll(tagEmailMap.get(tagName));
                 }
             }
-            if (EmailPreferences.isEmailSupported()) {
-                for (String emailStr : emailList) {
-                    EmailService.send(emailStr, sender, "Olog Email Notifier Test", logTitle);
-                }
+            Email logbookEmail = createEmail(emailList, logTitle, "test");
+            if (!emailList.isEmpty()) {
+                mailer.sendMail(logbookEmail);
+            } else {
+                logger.log(Level.INFO, "Email list is empty");
             }
-        } catch (MessagingException e) {
-            logger.log(Level.SEVERE, "There was an error sending an email with the logbook", e);
+        } catch (MailException e) {
+            logger.log(Level.SEVERE, "There was an error sending email", e);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "There was an error reading tag email JSON", e);
-        }
+        } 
+    }
+
+    public Email createEmail(List<String> emailList, String subject, String body) {
+        return EmailBuilder.startingBlank().from("conorschofield@lbl.gov")
+            .toMultiple(emailList)
+            .withSubject(subject)
+            .withPlainText(body)
+            .buildEmail();
     }
  }

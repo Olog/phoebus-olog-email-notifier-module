@@ -15,6 +15,16 @@ pom.xml
     <artifactId>olog-email-notifier-module</artifactId>
     <version>1.0-SNAPSHOT</version>
 </dependency>
+<dependency>
+    <groupId>jakarta.activation</groupId>
+    <artifactId>jakarta.activation-api</artifactId>
+    <version>2.1.3</version>
+</dependency>
+<dependency>
+    <groupId>com.sun.mail</groupId>
+    <artifactId>jakarta.mail</artifactId>
+    <version>2.0.1</version>
+</dependency>
 ```
 
 Example tagsToEmails.json
