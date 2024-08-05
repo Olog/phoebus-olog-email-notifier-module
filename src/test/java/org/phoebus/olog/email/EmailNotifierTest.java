@@ -15,12 +15,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
 import org.phoebus.olog.entity.Log;
 import org.phoebus.olog.entity.Tag;
 import org.phoebus.olog.entity.State;
 import org.simplejavamail.api.email.Email;
 import org.simplejavamail.api.mailer.Mailer;
+import org.simplejavamail.config.ConfigLoader;
+import org.simplejavamail.config.ConfigLoader.Property;
+import org.junit.Assert; 
+
+import org.simplejavamail.MailException;
 
 public class EmailNotifierTest {
 
@@ -41,18 +47,21 @@ public class EmailNotifierTest {
     @Test
     void testNotify_SuccessfulEmailSent() throws Exception {
         // Given
-        Log log = mock(Log.class);
+        Log mockLog = mock(Log.class);
         Tag activeTag = new Tag("important", State.Active);
         Set<Tag> tags = new HashSet<>(Collections.singletonList(activeTag));
-        when(log.getTags()).thenReturn(tags);
-        when(log.getTitle()).thenReturn("Test Log");
-
+        when(mockLog.getTags()).thenReturn(tags);
+        when(mockLog.getTitle()).thenReturn("Test Log");
         Map<String, List<String>> tagEmailMap = new HashMap<>();
         tagEmailMap.put("important", Arrays.asList("test@example.com"));
         when(tagEmailMapPreferences.tagEmailMap()).thenReturn(tagEmailMap);
 
         // When
-        emailNotifier.notify(log);
+        try (MockedStatic<ConfigLoader> mockConfigLoader = mockStatic(ConfigLoader.class)) {
+            mockConfigLoader.when(() -> ConfigLoader.getStringProperty(Property.DEFAULT_FROM_ADDRESS)).thenReturn("from@example.com");
+            mockConfigLoader.when(() -> ConfigLoader.getStringProperty(Property.DEFAULT_FROM_NAME)).thenReturn("from");
+            emailNotifier.notify(mockLog);
+        }
 
         // Then
         verify(mailer).sendMail(any(Email.class));
@@ -61,14 +70,18 @@ public class EmailNotifierTest {
     @Test
     void testNotify_NoEmailsForInactiveTag() throws Exception {
         // Given
-        Log log = mock(Log.class);
+        Log mockLog = mock(Log.class);
         Tag inactiveTag = new Tag("trivial", State.Inactive);
         Set<Tag> tags = new HashSet<>(Collections.singletonList(inactiveTag));
-        when(log.getTags()).thenReturn(tags);
-        when(log.getTitle()).thenReturn("Test Log");
+        when(mockLog.getTags()).thenReturn(tags);
+        when(mockLog.getTitle()).thenReturn("Test Log");
 
         // When
-        emailNotifier.notify(log);
+        try (MockedStatic<ConfigLoader> mockConfigLoader = mockStatic(ConfigLoader.class)) {
+            mockConfigLoader.when(() -> ConfigLoader.getStringProperty(Property.DEFAULT_FROM_ADDRESS)).thenReturn("from@example.com");
+            mockConfigLoader.when(() -> ConfigLoader.getStringProperty(Property.DEFAULT_FROM_NAME)).thenReturn("from");
+            emailNotifier.notify(mockLog);
+        }
 
         // Then
         verify(mailer, never()).sendMail(any(Email.class));
@@ -77,41 +90,50 @@ public class EmailNotifierTest {
     @Test
     void testNotify_EmailListIsEmpty() throws Exception {
         // Given
-        Log log = mock(Log.class);
+        Log mockLog = mock(Log.class);
         Tag activeTag = new Tag("nonexistent", State.Active);
         Set<Tag> tags = new HashSet<>(Collections.singletonList(activeTag));
-        when(log.getTags()).thenReturn(tags);
-        when(log.getTitle()).thenReturn("Test Log");
+        when(mockLog.getTags()).thenReturn(tags);
+        when(mockLog.getTitle()).thenReturn("Test Log");
 
         Map<String, List<String>> tagEmailMap = new HashMap<>();
         when(tagEmailMapPreferences.tagEmailMap()).thenReturn(tagEmailMap);
 
         // When
-        emailNotifier.notify(log);
+        try (MockedStatic<ConfigLoader> mockConfigLoader = mockStatic(ConfigLoader.class)) {
+            mockConfigLoader.when(() -> ConfigLoader.getStringProperty(Property.DEFAULT_FROM_ADDRESS)).thenReturn("from@example.com");
+            mockConfigLoader.when(() -> ConfigLoader.getStringProperty(Property.DEFAULT_FROM_NAME)).thenReturn("from");
+            emailNotifier.notify(mockLog);
+        }
 
         // Then
         verify(mailer, never()).sendMail(any(Email.class));
     }
 
     @Test
-    void testNotify_ExceptionInSendingEmail() throws Exception {
+    void testNotify_ExceptionInSendingEmailisCaught() throws Exception {
         // Given
-        Log log = mock(Log.class);
+        Log mockLog = mock(Log.class);
         Tag activeTag = new Tag("important", State.Active);
         Set<Tag> tags = new HashSet<>(Collections.singletonList(activeTag));
-        when(log.getTags()).thenReturn(tags);
-        when(log.getTitle()).thenReturn("Test Log");
+        when(mockLog.getTags()).thenReturn(tags);
+        when(mockLog.getTitle()).thenReturn("Test Log");
 
         Map<String, List<String>> tagEmailMap = new HashMap<>();
         tagEmailMap.put("important", Arrays.asList("test@example.com"));
         when(tagEmailMapPreferences.tagEmailMap()).thenReturn(tagEmailMap);
 
-        doThrow(new RuntimeException("Email sending failed")).when(mailer).sendMail(any(Email.class));
+        doThrow(mock(MailException.class)).when(mailer).sendMail(any(Email.class));
 
         // When
-        emailNotifier.notify(log);
-
-        // Then
-        // Check that the exception was logged
+        try {
+            try (MockedStatic<ConfigLoader> mockConfigLoader = mockStatic(ConfigLoader.class)) {
+                mockConfigLoader.when(() -> ConfigLoader.getStringProperty(Property.DEFAULT_FROM_ADDRESS)).thenReturn("from@example.com");
+                mockConfigLoader.when(() -> ConfigLoader.getStringProperty(Property.DEFAULT_FROM_NAME)).thenReturn("from");
+                emailNotifier.notify(mockLog);
+            }
+        } catch (Exception ex) {
+            Assert.fail("Exception was supposed to be caught.");
+        }
     }
 }

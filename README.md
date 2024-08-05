@@ -37,7 +37,7 @@ Example tagsToEmails.json
     }
 }  
 ```
-
+Add the following to olog application.properties
 Properties file:
 ```
 olog.tagsToEmailsFilePath=/pathToTagsToEmails.json
@@ -45,6 +45,8 @@ olog.tagsToEmailsFilePath=/pathToTagsToEmails.json
 simplejavamail.transportstrategy=SMTPS
 simplejavamail.smtp.host=smtp.default.com
 simplejavamail.smtp.port=25
-simplejavamail.smtp.username=username
-simplejavamail.smtp.password=password
+simplejavamail.defaults.from.name=From Default
+simplejavamail.defaults.from.address=from@default.com
 ```
+
+See: https://www.simplejavamail.org/configuration.html#section-available-properties for more simplejavamail properties
