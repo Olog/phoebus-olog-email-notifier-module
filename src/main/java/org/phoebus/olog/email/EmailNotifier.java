@@ -2,7 +2,6 @@ package org.phoebus.olog.email;
 
 import org.phoebus.olog.entity.Log;
 import org.phoebus.olog.notification.LogEntryNotifier;
-import org.simplejavamail.MailException;
 import org.simplejavamail.api.email.Email;
 import org.simplejavamail.api.mailer.Mailer;
 import org.simplejavamail.config.ConfigLoader;
@@ -51,10 +50,12 @@ public class EmailNotifier implements LogEntryNotifier {
         String senderName = ConfigLoader.getStringProperty(Property.DEFAULT_FROM_NAME);
 
         if (senderEmail == null) {
-            logger.log(Level.SEVERE, "Default sender email was not set in properties file");
+            logger.log(Level.WARNING, "Default sender email was not set in properties file");
+            senderEmail = "olog-email@email.com";
         }
         if (senderName == null) {
-            logger.log(Level.SEVERE, "Default sender name was not set in properties file");
+            logger.log(Level.WARNING, "Default sender name was not set in properties file");
+            senderName = "olog emailer";
         }
 
         logger.log(Level.INFO,"Email From " + senderName + " " + senderEmail);
